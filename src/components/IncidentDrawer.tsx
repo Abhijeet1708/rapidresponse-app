@@ -5,22 +5,21 @@ import { supabase } from '@/lib/supabase';
 import { formatDistanceToNow } from 'date-fns';
 import { 
   X, MapPin, Clock, Mic, Image as ImageIcon,
-  UserCheck, ShieldAlert, CheckCircle, UserPlus
+  UserCheck, ShieldAlert, CheckCircle
 } from 'lucide-react';
 import { useState } from 'react';
+import IncidentChat from './IncidentChat';
 
 export default function IncidentDrawer({ 
   incidentId, 
   incidents, 
   onClose,
   currentUser,
-  onDutyStaff
 }: { 
   incidentId: string | null;
   incidents: Incident[];
   onClose: () => void;
   currentUser: StaffProfile;
-  onDutyStaff: StaffProfile[];
 }) {
   const [isUpdating, setIsUpdating] = useState(false);
   const incident = incidents.find(i => i.id === incidentId);
@@ -30,7 +29,13 @@ export default function IncidentDrawer({
   const updateStatus = async (newStatus: string) => {
     setIsUpdating(true);
     
-    const updates: any = { status: newStatus };
+    const updates: {
+      status: string;
+      claimed_by?: string;
+      acknowledged_at?: string;
+      responded_at?: string;
+      resolved_at?: string;
+    } = { status: newStatus };
     
     // Also claim if acknowledging
     if (newStatus === 'Acknowledged' && !incident.claimed_by) {
@@ -171,7 +176,7 @@ export default function IncidentDrawer({
             {incident.guest_description && (
               <div className="p-4 bg-gray-50 border-b border-gray-100">
                 <p className="text-xs text-gray-500 font-medium mb-1">Guest Description:</p>
-                <p className="text-sm text-gray-800 italic">"{incident.guest_description}"</p>
+                <p className="text-sm text-gray-800 italic">&quot;{incident.guest_description}&quot;</p>
               </div>
             )}
 
@@ -183,6 +188,7 @@ export default function IncidentDrawer({
                       <ImageIcon className="w-3 h-3 mr-1" /> Photo
                     </p>
                     <a href={incident.photo_url} target="_blank" rel="noreferrer">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={incident.photo_url} alt="Incident" className="w-full h-24 object-cover rounded-lg border border-gray-200 shadow-sm hover:opacity-90" />
                     </a>
                   </div>
@@ -198,6 +204,11 @@ export default function IncidentDrawer({
               </div>
             )}
           </div>
+        </div>
+
+        {/* Real-time Chat */}
+        <div>
+          <IncidentChat incidentId={incident.id} currentUser={currentUser} />
         </div>
 
       </div>

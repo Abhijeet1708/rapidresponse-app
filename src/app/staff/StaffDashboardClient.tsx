@@ -29,7 +29,7 @@ export type Incident = {
 export type StaffProfile = {
   id: string;
   name: string;
-  avatar_url: string;
+  avatar_url?: string;
   role: string;
 };
 
@@ -205,8 +205,7 @@ export default function StaffDashboardClient({
           incidentId={selectedIncidentId} 
           incidents={incidents} 
           onClose={() => setSelectedIncidentId(null)}
-          currentUser={{ id: userProfile.id, ...userProfile }}
-          onDutyStaff={onDutyStaff}
+          currentUser={userProfile}
         />
       </div>
     </div>
