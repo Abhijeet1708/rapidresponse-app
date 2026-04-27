@@ -10,6 +10,8 @@ import {
   MapPin, CheckCircle, Clock
 } from 'lucide-react';
 
+import MediaCapture from '@/components/MediaCapture';
+
 const FloorMapPicker = dynamic(() => import('@/components/FloorMapPicker'), {
   ssr: false,
   loading: () => <div className="h-[400px] w-full bg-gray-100 animate-pulse rounded-xl" />
@@ -47,28 +49,52 @@ export default function ReportFlow({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [incidentId, setIncidentId] = useState<string | null>(null);
   const [pinCoordinates, setPinCoordinates] = useState<{x: number, y: number} | null>(null);
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [audio, setAudio] = useState<Blob | null>(null);
+
+  const uploadMedia = async (file: Blob, path: string) => {
+    const { data, error } = await supabase.storage.from('incident-media').upload(path, file);
+    if (error) {
+      console.error('Upload failed', error);
+      return null;
+    }
+    return supabase.storage.from('incident-media').getPublicUrl(data.path).data.publicUrl;
+  };
 
   const submitIncident = async () => {
     setIsSubmitting(true);
+    
+    let photoUrl = null;
+    let audioUrl = null;
+
+    if (photo) {
+      photoUrl = await uploadMedia(photo, `${propertyId}/${Date.now()}-photo.jpg`);
+    }
+    if (audio) {
+      audioUrl = await uploadMedia(audio, `${propertyId}/${Date.now()}-audio.webm`);
+    }
+
     const { data, error } = await supabase.from('incidents').insert({
       property_id: propertyId,
       floor_id: floorId,
       category,
       guest_description: description,
       pin_coordinates: pinCoordinates,
+      photo_url: photoUrl,
+      voice_note_url: audioUrl,
       status: 'Reported'
     }).select().single();
 
     setIsSubmitting(false);
     if (!error && data) {
       setIncidentId(data.id);
-      setStep(4);
+      setStep(5);
     } else {
       alert('Failed to submit incident. Please try again.');
     }
   };
 
-  if (step === 4 && incidentId) {
+  if (step === 5 && incidentId) {
     return (
       <div className="p-6 text-center">
         <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
@@ -90,29 +116,90 @@ export default function ReportFlow({
     );
   }
 
-  if (step === 3) {
+  if (step === 4) {
     return (
       <div className="p-4 max-w-md mx-auto">
-        <h2 className="text-xl font-bold mb-4">Additional Details (Optional)</h2>
-        <div className="bg-white p-4 rounded-xl shadow-sm mb-4">
-          <p className="text-sm text-gray-500 mb-2">Category: <span className="font-semibold text-gray-800">{category}</span></p>
-          <p className="text-sm text-gray-500 mb-4">Location: Floor {floorNumber}</p>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            maxLength={500}
-            rows={4}
-            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none"
-            placeholder="Describe the situation..."
-          />
-          <p className="text-right text-xs text-gray-400 mt-1">{description.length}/500</p>
+        <h2 className="text-2xl font-bold mb-6 text-center text-gray-900">Review Report</h2>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+          <div className="p-4 border-b border-gray-100 bg-gray-50">
+            <h3 className="font-semibold text-gray-800 flex items-center">
+              <ShieldAlert className="w-5 h-5 mr-2 text-red-500" />
+              {category}
+            </h3>
+          </div>
+          <div className="p-4 space-y-3">
+            <div className="flex items-start">
+              <MapPin className="w-5 h-5 mr-2 text-blue-500 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-gray-800">Floor {floorNumber}</p>
+                {pinCoordinates && <p className="text-xs text-gray-500">Pin dropped on map</p>}
+              </div>
+            </div>
+            
+            {description && (
+              <div className="pt-2 border-t border-gray-50">
+                <p className="text-sm text-gray-600">&quot;{description}&quot;</p>
+              </div>
+            )}
+            
+            {(photo || audio) && (
+              <div className="pt-3 border-t border-gray-50 flex gap-2">
+                {photo && <span className="bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded font-medium">Photo attached</span>}
+                {audio && <span className="bg-purple-50 text-purple-700 text-xs px-2 py-1 rounded font-medium">Voice note attached</span>}
+              </div>
+            )}
+          </div>
         </div>
         <button
           onClick={submitIncident}
           disabled={isSubmitting}
-          className="w-full bg-red-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-transform disabled:opacity-50"
+          className="w-full bg-red-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-transform disabled:opacity-50 flex items-center justify-center text-lg"
         >
           {isSubmitting ? 'Submitting...' : 'Submit Emergency Report'}
+        </button>
+        <button
+          onClick={() => setStep(3)}
+          disabled={isSubmitting}
+          className="w-full text-gray-500 font-medium py-4 mt-2 disabled:opacity-50"
+        >
+          Back to Edit
+        </button>
+      </div>
+    );
+  }
+
+  if (step === 3) {
+    return (
+      <div className="p-4 max-w-md mx-auto">
+        <h2 className="text-xl font-bold mb-4">Additional Details (Optional)</h2>
+        <div className="bg-white p-4 rounded-xl shadow-sm mb-4 space-y-4">
+          <MediaCapture 
+            onPhotoCapture={setPhoto} 
+            onAudioCapture={setAudio} 
+          />
+          <div>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              maxLength={500}
+              rows={4}
+              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none bg-gray-50"
+              placeholder="Describe the situation..."
+            />
+            <p className="text-right text-xs text-gray-400 mt-1">{description.length}/500</p>
+          </div>
+        </div>
+        <button
+          onClick={() => setStep(4)}
+          className="w-full bg-black text-white font-bold py-4 rounded-xl shadow active:scale-95 transition-transform"
+        >
+          Continue to Review
+        </button>
+        <button
+          onClick={() => setStep(2)}
+          className="w-full text-gray-500 font-medium py-4 mt-2"
+        >
+          Back
         </button>
       </div>
     );
