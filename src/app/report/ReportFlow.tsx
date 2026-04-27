@@ -7,7 +7,7 @@ import {
   HeartPulse, Flame, CloudFog, ShieldAlert, 
   HandMetal, Waves, ZapOff, ArrowDownUp, 
   UserX, Baby, Briefcase, HelpCircle,
-  MapPin, CheckCircle, Clock
+  MapPin
 } from 'lucide-react';
 
 import MediaCapture from '@/components/MediaCapture';

@@ -1,7 +1,25 @@
-export default function StaffDashboard() {
+import { createClient } from '@/lib/supabase-server';
+import StaffDashboardClient from './StaffDashboardClient';
+import { redirect } from 'next/navigation';
+
+export default async function StaffDashboard() {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) redirect('/login');
+
+  const { data: profile } = await supabase
+    .from('users')
+    .select('property_id, role, name')
+    .eq('id', user.id)
+    .single();
+
+  if (!profile) redirect('/login');
+
   return (
-    <div className="flex h-screen bg-gray-100 items-center justify-center">
-      <h1 className="text-2xl font-bold text-gray-800">Staff Dashboard Loaded</h1>
-    </div>
+    <StaffDashboardClient 
+      propertyId={profile.property_id} 
+      userProfile={profile} 
+    />
   );
 }
