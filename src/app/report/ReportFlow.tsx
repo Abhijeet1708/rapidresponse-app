@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabase';
 import { 
   HeartPulse, Flame, CloudFog, ShieldAlert, 
@@ -8,6 +9,11 @@ import {
   UserX, Baby, Briefcase, HelpCircle,
   MapPin, CheckCircle, Clock
 } from 'lucide-react';
+
+const FloorMapPicker = dynamic(() => import('@/components/FloorMapPicker'), {
+  ssr: false,
+  loading: () => <div className="h-[400px] w-full bg-gray-100 animate-pulse rounded-xl" />
+});
 
 const CATEGORIES = [
   { label: 'Medical Emergency', icon: HeartPulse, color: 'bg-red-500' },
@@ -27,17 +33,20 @@ const CATEGORIES = [
 export default function ReportFlow({ 
   propertyId, 
   floorId, 
-  floorNumber 
+  floorNumber,
+  floorMapUrl
 }: { 
   propertyId: string, 
   floorId: string, 
-  floorNumber: number 
+  floorNumber: number,
+  floorMapUrl: string
 }) {
   const [step, setStep] = useState(1);
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [incidentId, setIncidentId] = useState<string | null>(null);
+  const [pinCoordinates, setPinCoordinates] = useState<{x: number, y: number} | null>(null);
 
   const submitIncident = async () => {
     setIsSubmitting(true);
@@ -46,6 +55,7 @@ export default function ReportFlow({
       floor_id: floorId,
       category,
       guest_description: description,
+      pin_coordinates: pinCoordinates,
       status: 'Reported'
     }).select().single();
 
@@ -111,11 +121,13 @@ export default function ReportFlow({
   if (step === 2) {
     return (
       <div className="p-4 max-w-md mx-auto">
-        <h2 className="text-xl font-bold mb-4 text-center">Confirm Location</h2>
-        <div className="bg-white rounded-xl shadow-sm p-8 text-center border border-gray-100 mb-6">
-          <MapPin className="mx-auto h-12 w-12 text-blue-500 mb-3" />
-          <p className="text-gray-500 mb-1">You are reporting from:</p>
-          <p className="text-2xl font-bold text-gray-800">Floor {floorNumber}</p>
+        <h2 className="text-xl font-bold mb-2 text-center">Confirm Location</h2>
+        <p className="text-gray-500 text-center text-sm mb-4">Tap on the map to place a pin</p>
+        <div className="mb-6">
+          <FloorMapPicker 
+            floorMapUrl={floorMapUrl} 
+            onLocationSelect={(coords) => setPinCoordinates(coords)} 
+          />
         </div>
         <button
           onClick={() => setStep(3)}

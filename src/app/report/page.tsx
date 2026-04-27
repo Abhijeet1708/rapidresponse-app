@@ -29,7 +29,13 @@ export default async function ReportPage({ searchParams }: { searchParams: { t?:
     .eq('id', payload.propertyId)
     .single();
 
-  if (!property) {
+  const { data: floor } = await supabase
+    .from('floors')
+    .select('floor_map_file_url')
+    .eq('id', payload.floorId)
+    .single();
+
+  if (!property || !floor) {
     notFound();
   }
 
@@ -44,7 +50,8 @@ export default async function ReportPage({ searchParams }: { searchParams: { t?:
       <ReportFlow 
         propertyId={payload.propertyId} 
         floorId={payload.floorId} 
-        floorNumber={payload.floorNumber} 
+        floorNumber={payload.floorNumber}
+        floorMapUrl={floor.floor_map_file_url || 'https://via.placeholder.com/1000x1000.png?text=Floor+Map+Not+Available'}
       />
     </main>
   );
