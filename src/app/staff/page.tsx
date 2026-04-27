@@ -10,7 +10,7 @@ export default async function StaffDashboard() {
 
   const { data: profile } = await supabase
     .from('users')
-    .select('property_id, role, name')
+    .select('id, property_id, role, name, avatar_url')
     .eq('id', user.id)
     .single();
 

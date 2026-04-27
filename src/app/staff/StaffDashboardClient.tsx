@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import IncidentFeed from '@/components/IncidentFeed';
+import IncidentDrawer from '@/components/IncidentDrawer';
 
 const LiveIncidentMap = dynamic(() => import('@/components/LiveIncidentMap'), { ssr: false });
 
@@ -37,7 +38,7 @@ export default function StaffDashboardClient({
   userProfile
 }: { 
   propertyId: string;
-  userProfile: { name: string; role: string };
+  userProfile: { id: string; name: string; role: string; avatar_url?: string };
 }) {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [onDutyStaff, setOnDutyStaff] = useState<StaffProfile[]>([]);
@@ -198,6 +199,15 @@ export default function StaffDashboardClient({
             />
           </div>
         </div>
+
+        {/* Detail Drawer overlay */}
+        <IncidentDrawer 
+          incidentId={selectedIncidentId} 
+          incidents={incidents} 
+          onClose={() => setSelectedIncidentId(null)}
+          currentUser={{ id: userProfile.id, ...userProfile }}
+          onDutyStaff={onDutyStaff}
+        />
       </div>
     </div>
   );
