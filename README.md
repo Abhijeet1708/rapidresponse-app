@@ -1,0 +1,3 @@
+# RapidResponse
+
+RapidResponse is a real-time crisis coordination platform for the hospitality industry. It provides a public QR-code-accessible interface for guests to report incidents, a real-time operations dashboard for on-duty responders, and a comprehensive configuration panel for property administrators and superadmins, ensuring every critical communication delay is minimized during emergencies.
