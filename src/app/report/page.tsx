@@ -1,6 +1,8 @@
 import { verifyGuestToken } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
-import ReportFlow from './ReportFlow';
+import dynamic from 'next/dynamic';
+
+const ReportFlow = dynamic(() => import('./ReportFlow'), { ssr: false });
 import { notFound } from 'next/navigation';
 
 export default async function ReportPage({ searchParams }: { searchParams: { t?: string } }) {

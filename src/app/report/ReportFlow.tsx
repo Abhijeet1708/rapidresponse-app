@@ -12,6 +12,8 @@ import {
 
 import MediaCapture from '@/components/MediaCapture';
 
+import LiveStatusTracker from '@/components/LiveStatusTracker';
+
 const FloorMapPicker = dynamic(() => import('@/components/FloorMapPicker'), {
   ssr: false,
   loading: () => <div className="h-[400px] w-full bg-gray-100 animate-pulse rounded-xl" />
@@ -95,25 +97,7 @@ export default function ReportFlow({
   };
 
   if (step === 5 && incidentId) {
-    return (
-      <div className="p-6 text-center">
-        <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
-        <h2 className="text-2xl font-bold mb-2">Help is on the way</h2>
-        <p className="text-gray-600 mb-6">Your incident #{incidentId.split('-')[0]} has been reported.</p>
-        <div className="bg-white rounded-lg shadow p-4 border border-gray-100">
-          <div className="flex items-center justify-between mb-4">
-            <span className="font-semibold text-gray-700">Status</span>
-            <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium animate-pulse">
-              Reported
-            </span>
-          </div>
-          <div className="flex items-center text-gray-500 text-sm">
-            <Clock className="w-4 h-4 mr-2" />
-            <span>Submitted just now</span>
-          </div>
-        </div>
-      </div>
-    );
+    return <LiveStatusTracker incidentId={incidentId} />;
   }
 
   if (step === 4) {
